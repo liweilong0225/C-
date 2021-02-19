@@ -16,14 +16,14 @@ int main()
 	List *pHead = NULL;
 	List *pEnd = NULL;
 
-	List a = {7,NULL};
+	//List a = {7,NULL};
 
 	AddNode(&pHead,&pEnd,1);
 	AddNode(&pHead,&pEnd,2);
 	AddNode(&pHead,&pEnd,3);
 	AddNode(&pHead,&pEnd,4);
 
-	InsertNode(&pHead,&pEnd,&a,5);
+	//InsertNode(&pHead,&pEnd,&a,5);
 
 	DeleteNode(&pHead,&pEnd,4);
 	while (pHead != NULL)

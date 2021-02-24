@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="通讯录.c">
+    <ClCompile Include="通讯录简易版.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

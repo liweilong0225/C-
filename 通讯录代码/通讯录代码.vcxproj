@@ -11,8 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8B0C8716-2D07-4A69-A2A2-372E9F54A2C3}</ProjectGuid>
-    <RootNamespace>通讯录</RootNamespace>
+    <ProjectGuid>{8531A10A-ADB9-46CE-93A8-2E3E983937B7}</ProjectGuid>
+    <RootNamespace>通讯录代码</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -63,7 +63,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="通讯录.c" />
+    <ClCompile Include="通讯录代码.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

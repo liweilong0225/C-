@@ -29,18 +29,53 @@ void ShowInfo(List *pHead,Page *pPage);
 void TurnPage(List *pHead,Page *pPage);
 char GetKey();
 void ShowMenu(Page *pPage);
+void Browse(List *pHead,int n);
+List *GetNodeIn();
+char *GetString();
+void Query(List *pHead);
+
+int g_MenuType;
+char g_Key;
 
 int main()
 {
 	List *pHead = NULL;
 	List *pEnd = NULL;
-	Page *pPage = NULL;
-
+	char c;
 	InitInfo(&pHead,&pEnd,100);
+	while (1)
+	{
+		printf("1.查看通讯录\n");
+		printf("2.添加信息\n");
+		printf("3.查询信息\n");
+		printf("4.删除信息\n");
+		printf("5.修改信息\n");
+		printf("q.退出\n");
 
-	pPage = GetPage(pHead,10);
-	TurnPage(pHead,pPage);
+		c = GetKey();
 
+		switch (c)
+		{
+		case '1':
+			g_MenuType = 1;
+			Browse(pHead,10);
+			break;
+		case '2':
+			AddNode(&pHead,&pEnd,GetNodeIn());
+			break;
+		case '3':
+			g_MenuType = 3;
+			Query(pHead);
+			break;
+		case 'q':
+			return;
+			break;
+		default:
+			printf("按错了\n");
+			break;
+		}
+
+	}
 	return 0;
 }
 List *GetNode()
@@ -184,11 +219,15 @@ void TurnPage(List *pHead,Page *pPage)
 		case 'b':
 			return;
 			break;
+		case 'c':
+			return;
+			break;
 		default:
 			printf("按错了\n");
 			break;
 		}
 		c = GetKey();
+		g_Key = c;
 	}
 }
 char GetKey()
@@ -205,5 +244,119 @@ char GetKey()
 }
 void ShowMenu(Page *pPage)
 {
-	printf("当前第%d页	共%d页	共%d条	w上一页	s下一页	b返回\n",pPage->Currentage,pPage->TotalPage,pPage->TotalInfo);
+	switch (g_MenuType)
+	{
+	case 1:
+		printf("当前第%d页	共%d页	共%d条	w上一页	s下一页	b返回\n",pPage->Currentage,pPage->TotalPage,pPage->TotalInfo);
+		break;
+	case 3:
+		printf("当前第%d页	共%d页	共%d条	w上一页	s下一页	c重新查询 b返回\n",pPage->Currentage,pPage->TotalPage,pPage->TotalInfo);
+		break;
+	default:
+		break;
+	}
+}
+void Browse(List *pHead,int n)
+{
+	Page *pPage = GetPage(pHead,n);
+	TurnPage(pHead,pPage);
+	free(pPage);
+	pPage = NULL;
+}
+List *GetNodeIn()
+{
+	List *pTemp = (List*)malloc(sizeof(List));
+	pTemp->id = GetId();
+	printf("请输入姓名：\n");
+	pTemp->name = GetString();
+	printf("请输入电话：\n");
+	pTemp->tel = GetString();
+	pTemp->pNext = NULL;
+
+	return pTemp;
+}
+char *GetString()
+{
+	int size = 5;
+	char *str = (char*)malloc(size);
+	char c;
+	int count = 0;
+	char *newstr = NULL;
+	char *pMark = str;
+
+	while ((c = getchar())!='\n')
+	{
+		*str = c;
+		str++;
+		count++;
+		if (count +1 == size)
+		{
+			*str = '\0';
+			size += 5;
+			newstr = (char*)malloc(size);
+			strcpy_s(newstr,size,pMark);
+			free(pMark);
+			pMark = newstr;
+			str = newstr+count;
+		}
+	}
+	*str = '\0';
+	return pMark;
+}
+void Query(List *pHead)
+{
+	char *str = NULL;
+	List *pNewHead = NULL;
+	List *pNewEnd = NULL;
+	List *pTemp = NULL;
+	List *pDel = NULL;
+	List *pMark = pHead;
+
+	while (1)
+	{
+		while (1)
+		{
+			printf("请输入关键字：\n");
+			str = GetString();
+			printf("a确认 其他键重新输入\n");
+			if (GetKey() == 'a')
+			{
+				break;
+			}
+			else
+			{
+				free(str);
+				str = NULL;
+			}
+		}
+		pHead = pMark;
+		while (pHead != NULL)
+		{
+			if (0 == strncmp(pHead->name,str,strlen(str)) || 0 == strncmp(pHead->tel,str,strlen(str)))
+			{
+				pTemp = (List*)malloc(sizeof(List));
+				pTemp->id = pHead->id;
+				pTemp->name = pHead->name;
+				pTemp->tel = pHead->tel;
+				pTemp->pNext = NULL;
+				AddNode(&pNewHead,&pNewEnd,pTemp);
+			}
+			pHead = pHead->pNext;
+		}
+		Browse(pNewHead,10);
+
+		while (pNewHead != NULL)
+		{
+			pDel = pNewHead;
+			pNewHead = pNewHead->pNext;
+			free(pDel);
+			pDel = NULL;
+		}
+		pNewEnd = NULL;
+
+		if ('b' == g_Key)
+		{
+			break;
+		}
+	}
 }

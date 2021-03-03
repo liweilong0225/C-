@@ -33,6 +33,9 @@ void Browse(List *pHead,int n);
 List *GetNodeIn();
 char *GetString();
 void Query(List *pHead);
+void DeleteNode(List **ppHead,List **ppEnd,int id);
+void DeleteInfo(List **ppHead,List **ppEnd);
+void UpDateInfo(List *pHead);
 
 int g_MenuType;
 char g_Key;
@@ -66,6 +69,14 @@ int main()
 		case '3':
 			g_MenuType = 3;
 			Query(pHead);
+			break;
+		case '4':
+			g_MenuType = 4;
+			DeleteInfo(&pHead,&pEnd);
+			break;
+		case '5':
+			g_MenuType = 5;
+			UpDateInfo(pHead);
 			break;
 		case 'q':
 			return;
@@ -222,6 +233,12 @@ void TurnPage(List *pHead,Page *pPage)
 		case 'c':
 			return;
 			break;
+		case 'd':
+			return;
+			break;
+		case 'u':
+			return;
+			break;
 		default:
 			printf("按错了\n");
 			break;
@@ -251,6 +268,12 @@ void ShowMenu(Page *pPage)
 		break;
 	case 3:
 		printf("当前第%d页	共%d页	共%d条	w上一页	s下一页	c重新查询 b返回\n",pPage->Currentage,pPage->TotalPage,pPage->TotalInfo);
+		break;
+	case 4:
+		printf("当前第%d页	共%d页	共%d条	w上一页	s下一页	d删除信息 b返回\n",pPage->Currentage,pPage->TotalPage,pPage->TotalInfo);
+		break;
+	case 5:
+		printf("当前第%d页	共%d页	共%d条	w上一页	s下一页	u修改信息 b返回\n",pPage->Currentage,pPage->TotalPage,pPage->TotalInfo);
 		break;
 	default:
 		break;
@@ -354,9 +377,100 @@ void Query(List *pHead)
 		}
 		pNewEnd = NULL;
 
-		if ('b' == g_Key)
+		if ('b' == g_Key || 'd' == g_Key || 'u' == g_Key)
 		{
 			break;
 		}
+	}
+}
+void DeleteNode(List **ppHead,List **ppEnd,int id)
+{
+	List *pDel = NULL;
+	List *pMark = *ppHead;
+
+	if ((*ppHead)->id == id)
+	{
+		pDel = *ppHead;
+		*ppHead = (*ppHead)->pNext;
+		free(pDel);
+		pDel = NULL;
+		return;
+	}
+	while (pMark->pNext != NULL)
+	{
+		if (pMark->pNext->id == id)
+		{
+			pDel = pMark->pNext;
+			pMark->pNext =  pMark->pNext->pNext;
+			free(pDel);
+			pDel = NULL;
+			if (NULL == pMark->pNext)
+			{
+				*ppEnd = pMark;
+			}
+			return;
+		}
+		pMark = pMark->pNext;
+	}
+}
+void DeleteInfo(List **ppHead,List **ppEnd)
+{
+	char *str = NULL;
+	int id;
+	while (1)
+	{
+		Query(*ppHead);
+		if ( 'b ' == g_Key)
+		{
+			break;
+		}
+		printf("请输入要删除的编号：\n");
+		str = GetString();
+		id = atoi(str);
+		free(str);
+		str = NULL;
+		DeleteNode(ppHead,ppEnd,id);
+		printf("y继续删除 其他键返回\n");
+		if (GetKey() != 'y')
+		{
+			break;
+		}
+	}	
+}
+void UpDateInfo(List *pHead)
+{
+	char *str = NULL;
+	int id;
+	Query(pHead);
+	if ('b' == g_Key)
+	{
+		return;
+	}
+	printf("请输入要修改的编号：\n");
+	str = GetString();
+	id = atoi(str);
+	free(str);
+	str = NULL;
+
+	while (pHead != NULL)
+	{
+		if (pHead->id == id)
+		{
+			printf("请输入姓名：\n");
+			str = GetString();
+			if (strlen(str)>0)
+			{
+				free(pHead->name);
+				pHead->name = str;
+			}
+			printf("请输入电话：\n");
+			str = GetString();
+			if (strlen(str)>0)
+			{
+				free(pHead->tel);
+				pHead->tel = str;
+			}
+		}
+		pHead = pHead->pNext;
 	}
 }

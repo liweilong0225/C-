@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <stdlib.h>
 #include "resource.h"
 
 //===========================资源=========================================
@@ -121,6 +122,65 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPreInstance,LPSTR lpCmdLine,
 	return 0;
 }
 
+//============================================蛇=================================================
+struct Snake
+{
+	int x;
+	int y;
+	Snake *pNext;
+};
+Snake *g_pHead = NULL;
+Snake *g_pEnd = NULL;
+int FX = VK_RIGHT;
+//创建蛇
+void CreateSnake()
+{
+	for (int i = 0; i < 4; i++)
+	{
+		Snake *pSnake = (Snake*)malloc(sizeof(Snake));
+		pSnake->x = 30+i*30;
+		pSnake->y = 30;
+		pSnake->pNext = NULL;
+		if (g_pHead == NULL)
+		{
+			g_pHead = pSnake;
+			g_pEnd = pSnake;
+		}
+		else
+		{
+			g_pEnd->pNext = pSnake;
+			g_pEnd = pSnake;
+		}
+	}
+}
+//显示蛇
+void ShowSnake(HDC hdc)
+{
+	HDC hMemDC = CreateCompatibleDC(hdc);
+	//-----------------------链表中所有节点都贴上图---------------------------------------------
+	//显示蛇身
+	Snake *pTemp = g_pHead;
+	while (pTemp->pNext != NULL)
+	{
+		SelectObject(hMemDC,g_hSnakeBody);
+		BitBlt(hdc,pTemp->x,pTemp->y,30,30,hMemDC,0,0,SRCCOPY);
+		pTemp = pTemp->pNext;
+	}
+	//显示蛇头
+	if (FX == VK_LEFT)
+		SelectObject(hMemDC,g_hSnakeHeadLeft);
+	if (FX == VK_RIGHT)
+		SelectObject(hMemDC,g_hSnakeHeadRight);
+	if (FX == VK_UP)
+		SelectObject(hMemDC,g_hSnakeHeadUp);
+	if (FX == VK_DOWN)
+		SelectObject(hMemDC,g_hSnakeHeadDown);
+	BitBlt(hdc,g_pEnd->x,g_pEnd->y,30,30,hMemDC,0,0,SRCCOPY);
+	//-----------------------链表中所有节点都贴上图---------------------------------------------
+	DeleteDC(hMemDC);
+}
+
+//============================================蛇=================================================
 
 //=================================处理消息========================================================
 LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
@@ -130,6 +190,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 	case WM_CREATE:
 		{
 			LoadRes(hIns);//加载资源
+			CreateSnake();//创建蛇
 		}
 		break;
 	case WM_PAINT:
@@ -138,6 +199,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			HDC hdc = BeginPaint(hwnd,&ps);
 			//------显示游戏内容-------
 			ShowBack(hdc);	//显示背景
+			ShowSnake(hdc);//显示蛇
 			//------显示游戏内容-------
 			//ReleaseDC(hwnd,hdc);
 			EndPaint(hwnd,&ps);

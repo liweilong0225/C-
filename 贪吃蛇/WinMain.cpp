@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <stdlib.h>
 #include "resource.h"
+#include <time.h>
 
 //===========================资源=========================================
 HBITMAP g_hBack = 0;
@@ -49,6 +50,10 @@ int arrBackMap[20][20]={
 //==========================背景地图=======================================
 void ShowBack(HDC hdc)
 {
+	//--------------------画一个大矩形盖住多余的蛇身------------------
+	Rectangle(hdc,0,0,600,600);
+	//--------------------画一个大矩形盖住多余的蛇身------------------
+
 	HDC hMemDC = CreateCompatibleDC(hdc);
 	//--------------------遍历arrBackMap数组------------------------
 	for (int i = 0; i < 20; i++)
@@ -179,7 +184,50 @@ void ShowSnake(HDC hdc)
 	//-----------------------链表中所有节点都贴上图---------------------------------------------
 	DeleteDC(hMemDC);
 }
-
+//蛇移动
+void SnakeMove()
+{
+	//在头取一个节点
+	Snake *pNode = g_pHead;
+	g_pHead = g_pHead->pNext;
+	pNode->pNext = NULL;
+	//判断方向给这个几点 赋值坐标
+	if (FX == VK_LEFT)
+	{
+		if(g_pEnd->x == 0)
+			pNode->x = 570;
+		else
+			pNode->x = g_pEnd->x-30;
+		pNode->y = g_pEnd->y;
+	}
+	if (FX == VK_RIGHT)
+	{
+		if(g_pEnd->x == 570)
+			pNode->x = 0;
+		else
+			pNode->x = g_pEnd->x+30;
+		pNode->y = g_pEnd->y;
+	}
+	if (FX == VK_UP)
+	{
+		if(g_pEnd->y == 0)
+			pNode->y = 570;
+		else
+			pNode->y = g_pEnd->y-30;
+		pNode->x = g_pEnd->x;
+	}
+	if (FX == VK_DOWN)
+	{
+		if(g_pEnd->y == 570)
+			pNode->y = 0;
+		else
+			pNode->y = g_pEnd->y+30;
+		pNode->x = g_pEnd->x;
+	}
+	//把这个节点添加到尾部
+	g_pEnd->pNext = pNode;
+	g_pEnd = pNode;
+}
 //============================================蛇=================================================
 
 //=================================处理消息========================================================
@@ -203,6 +251,23 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			//------显示游戏内容-------
 			//ReleaseDC(hwnd,hdc);
 			EndPaint(hwnd,&ps);
+		}
+		break;
+	case WM_TIMER:
+		{
+			SnakeMove();
+			RECT rect = {0,0,600,600};
+			InvalidateRect(hwnd,&rect,TRUE);
+		}
+		break;
+	case WM_KEYDOWN:
+		switch (wParam)
+		{
+		case VK_RETURN:
+			SetTimer(hwnd,1,200,0);
+			break;
+		default:
+			break;
 		}
 		break;
 	case WM_CLOSE:

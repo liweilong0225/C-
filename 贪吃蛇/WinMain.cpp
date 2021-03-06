@@ -79,6 +79,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPreInstance,LPSTR lpCmdLine,
 	HWND hwnd = 0;
 	MSG msg;       //  装消息的结构体
 	WNDCLASSEX wndclass;
+	srand((unsigned)time(NULL));
 	//-----------------------------------------------------
 
 	hIns = hInstance;
@@ -126,6 +127,13 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPreInstance,LPSTR lpCmdLine,
 
 	return 0;
 }
+//============================================苹果===============================================
+struct Apple
+{
+	int x;
+	int y;
+};
+Apple apple;
 
 //============================================蛇=================================================
 struct Snake
@@ -191,7 +199,7 @@ void SnakeMove()
 	Snake *pNode = g_pHead;
 	g_pHead = g_pHead->pNext;
 	pNode->pNext = NULL;
-	//判断方向给这个几点 赋值坐标
+	//判断方向给这个节点 赋值坐标
 	if (FX == VK_LEFT)
 	{
 		if(g_pEnd->x == 0)
@@ -230,6 +238,60 @@ void SnakeMove()
 }
 //============================================蛇=================================================
 
+//============================================苹果===============================================
+//判断是否可以吃苹果
+BOOL IsEatApple()
+{
+	if(g_pEnd->x == apple.x && g_pEnd->y == apple.y)
+		return TRUE;
+	return FALSE;
+}
+//蛇长大
+void GrowUp()
+{
+	//给蛇头添加一个节点
+	Snake* pSnake = (Snake*)malloc(sizeof(Snake));
+	pSnake->x = apple.x;
+	pSnake->y = apple.y;
+	pSnake->pNext = NULL;
+	g_pEnd->pNext = pSnake;
+	g_pEnd = pSnake;
+}
+//随机创建苹果
+void CreateApple()
+{
+	while (1)
+	{
+		//随机一个坐标
+		apple.x = rand()%20*30;
+		apple.y = rand()%20*30;
+		//判断是否在墙上
+		int i = apple.y/30;
+		int j = apple.x/30;
+		if (arrBackMap[i][j] == 1)
+			continue;
+		//判断是否在蛇身上
+		Snake* pTemp = g_pHead;
+		while (pTemp)
+		{
+			if (pTemp->x == apple.x && pTemp->y == apple.y)
+				break;
+			pTemp = pTemp->pNext;
+		}
+		//判断是否随机成功
+		if(pTemp == NULL)
+			return;
+	}
+}
+//显示苹果
+void ShowApple(HDC hdc)
+{
+	HDC hMemDC = CreateCompatibleDC(hdc);
+	SelectObject(hMemDC,g_hApple);
+	BitBlt(hdc,apple.x,apple.y,30,30,hMemDC,0,0,SRCCOPY);
+	DeleteDC(hMemDC);
+}
+
 //=================================处理消息========================================================
 LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
@@ -239,6 +301,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 		{
 			LoadRes(hIns);//加载资源
 			CreateSnake();//创建蛇
+			CreateApple();//创建苹果
 		}
 		break;
 	case WM_PAINT:
@@ -247,9 +310,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			HDC hdc = BeginPaint(hwnd,&ps);
 			//------显示游戏内容-------
 			ShowBack(hdc);	//显示背景
-			ShowSnake(hdc);//显示蛇
+			ShowSnake(hdc);	//显示蛇
+			ShowApple(hdc);	//显示苹果
 			//------显示游戏内容-------
-			//ReleaseDC(hwnd,hdc);
 			EndPaint(hwnd,&ps);
 		}
 		break;
@@ -258,6 +321,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			SnakeMove();
 			RECT rect = {0,0,600,600};
 			InvalidateRect(hwnd,&rect,TRUE);
+			if (IsEatApple() == TRUE)
+			{
+				GrowUp();
+				CreateApple();
+			}
 		}
 		break;
 	case WM_KEYDOWN:
@@ -265,6 +333,22 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 		{
 		case VK_RETURN:
 			SetTimer(hwnd,1,200,0);
+			break;
+		case VK_LEFT:
+			if(FX != VK_RIGHT)
+				FX = VK_LEFT;
+			break;
+		case VK_RIGHT:
+			if(FX != VK_LEFT)
+				FX = VK_RIGHT;
+			break;
+		case VK_UP:
+			if(FX != VK_DOWN)
+				FX = VK_UP;
+			break;
+		case VK_DOWN:
+			if(FX != VK_UP)
+				FX = VK_DOWN;
 			break;
 		default:
 			break;

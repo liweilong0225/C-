@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "resource.h"
 #include <time.h>
+#include <stdio.h>
 
 //===========================资源=========================================
 HBITMAP g_hBack = 0;
@@ -25,28 +26,31 @@ void LoadRes(HINSTANCE hInstance)
 //===========================资源=========================================
 
 //==========================背景地图=======================================
-int arrBackMap[20][20]={
-	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
-};
+int arrBackMap[20][20]={0};
+BOOL LoadMap()
+{
+	//----------------------打开文件-----------------------------
+	FILE* pf= NULL;
+	fopen_s(&pf,".\\map.txt","rb");// .统计目录 ..上一级目录
+	if(pf == 0)
+		return FALSE;
+	//--------------------读文件内容存到 arrBackMap --------------
+	for (int i = 0; i < 20; i++)
+	{
+		for (int j = 0; j < 20; j++)
+		{
+			char c = fgetc(pf);//读一个字符
+			arrBackMap[i][j] = c-'0';//获取数字，存到数组里
+		}
+		//过滤掉'\r\n'
+		fgetc(pf);
+		fgetc(pf);
+	}
+	//----------------------关闭文件---------------------------------
+	fclose(pf);
+	pf = 0;
+	return TRUE;
+}
 //==========================背景地图=======================================
 void ShowBack(HDC hdc)
 {
@@ -146,6 +150,15 @@ Snake *g_pHead = NULL;
 Snake *g_pEnd = NULL;
 int FX = VK_RIGHT;
 //创建蛇
+BOOL IsGameOver()
+{
+	//通过蛇头的坐标获取背景数组的下标
+	int i = g_pEnd->y/30;
+	int j = g_pEnd->x/30;
+	if(arrBackMap[i][j] == 1)
+		return TRUE;
+	return FALSE;
+}
 void CreateSnake()
 {
 	for (int i = 0; i < 4; i++)
@@ -188,7 +201,7 @@ void ShowSnake(HDC hdc)
 		SelectObject(hMemDC,g_hSnakeHeadUp);
 	if (FX == VK_DOWN)
 		SelectObject(hMemDC,g_hSnakeHeadDown);
-	BitBlt(hdc,g_pEnd->x,g_pEnd->y,30,30,hMemDC,0,0,SRCCOPY);
+	BitBlt(hdc,g_pEnd->x,g_pEnd->y,30,30,hMemDC,0,0,SRCAND);
 	//-----------------------链表中所有节点都贴上图---------------------------------------------
 	DeleteDC(hMemDC);
 }
@@ -299,20 +312,28 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 	{
 	case WM_CREATE:
 		{
-			LoadRes(hIns);//加载资源
-			CreateSnake();//创建蛇
-			CreateApple();//创建苹果
+			LoadRes(hIns);	//加载资源
+			LoadMap();		//加载地图
+			CreateSnake();	//创建蛇
+			CreateApple();	//创建苹果
 		}
 		break;
 	case WM_PAINT:
 		{
+			//双缓冲 解决屏幕闪烁问题
 			PAINTSTRUCT ps = {0};
 			HDC hdc = BeginPaint(hwnd,&ps);
+			HDC hMemDC = CreateCompatibleDC(hdc);
+			HBITMAP hBitmap = CreateCompatibleBitmap(hdc,600,600);//创建一个位图和hdc,兼容的图片可以画颜色
+			SelectObject(hMemDC,hBitmap);
 			//------显示游戏内容-------
-			ShowBack(hdc);	//显示背景
-			ShowSnake(hdc);	//显示蛇
-			ShowApple(hdc);	//显示苹果
+			ShowBack(hMemDC);	//显示背景
+			ShowSnake(hMemDC);	//显示蛇
+			ShowApple(hMemDC);	//显示苹果
 			//------显示游戏内容-------
+			BitBlt(hdc,0,0,600,600,hMemDC,0,0,SRCCOPY);
+			DeleteObject(hBitmap);
+			DeleteDC(hMemDC);
 			EndPaint(hwnd,&ps);
 		}
 		break;
@@ -321,6 +342,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			SnakeMove();
 			RECT rect = {0,0,600,600};
 			InvalidateRect(hwnd,&rect,TRUE);
+			if (IsGameOver() == TRUE)
+			{
+				KillTimer(hwnd,1);
+				MessageBox(0,"GameOver","提示",MB_OK);
+				break;
+			}
+			//是否吃到苹果
 			if (IsEatApple() == TRUE)
 			{
 				GrowUp();
@@ -332,7 +360,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 		switch (wParam)
 		{
 		case VK_RETURN:
-			SetTimer(hwnd,1,200,0);
+			SetTimer(hwnd,1,100,0);
 			break;
 		case VK_LEFT:
 			if(FX != VK_RIGHT)
